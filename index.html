@@ -136,11 +136,15 @@ select{background:var(--bg3);border:1px solid var(--border2);color:var(--text);p
       <label style="font-size:9px;color:var(--muted);display:block;margin-bottom:3px">🍌 Clave de API de Google AI Studio (para Nano Banana) — se guarda solo en este navegador, nunca en el archivo ni se envía a nadie salvo a Google al generar</label>
       <div style="display:flex;gap:6px;align-items:center">
         <input type="password" id="gemini-api-key" placeholder="Pega aquí tu clave de Google AI Studio..." style="flex:1;background:var(--bg3);border:1px solid var(--border2);color:var(--text);font-size:10px;border-radius:4px;padding:5px;box-sizing:border-box">
+        <button class="sm" onclick="saveGeminiApiKey()" style="background:var(--green);color:#000;font-weight:600;white-space:nowrap">💾 Guardar</button>
         <button class="sm" onclick="forgetGeminiApiKey()" title="Olvidar la clave guardada en este navegador">🗑️</button>
       </div>
-      <div id="gemini-key-status" style="font-size:9px;color:var(--muted);margin-top:3px"></div>
+      <div id="gemini-key-status" style="font-size:9px;color:var(--muted);margin-top:3px">Escribe tu clave y pulsa Guardar — no tendrás que volver a hacerlo en este navegador.</div>
       <label style="font-size:9px;color:var(--muted);display:block;margin:8px 0 3px">🔗 URL de tu proxy (Cloudflare Worker) — necesario porque Gemini no acepta llamadas directas desde el navegador</label>
-      <input type="text" id="gemini-proxy-url" value="https://nano-banana-proxy.gjcabrera91.workers.dev" placeholder="https://tu-worker.tu-usuario.workers.dev" style="width:100%;background:var(--bg3);border:1px solid var(--border2);color:var(--text);font-size:10px;border-radius:4px;padding:5px;box-sizing:border-box">
+      <div style="display:flex;gap:6px;align-items:center">
+        <input type="text" id="gemini-proxy-url" value="https://nano-banana-proxy.gjcabrera91.workers.dev" placeholder="https://tu-worker.tu-usuario.workers.dev" style="flex:1;background:var(--bg3);border:1px solid var(--border2);color:var(--text);font-size:10px;border-radius:4px;padding:5px;box-sizing:border-box">
+        <button class="sm" onclick="saveGeminiProxyUrl()" style="background:var(--green);color:#000;font-weight:600;white-space:nowrap">💾 Guardar</button>
+      </div>
       <div id="gemini-proxy-status" style="font-size:9px;color:var(--muted);margin-top:3px"></div>
     </div>
     <div id="missing-assets-list"></div>
@@ -1310,6 +1314,24 @@ function initGeminiApiKeyField(){
       if(proxyStatusEl) proxyStatusEl.textContent = v ? '✓ URL guardada en este navegador.' : '';
     });
   }
+}
+
+function saveGeminiApiKey(){
+  const input = document.getElementById('gemini-api-key');
+  const statusEl = document.getElementById('gemini-key-status');
+  const v = input?.value.trim();
+  if(!v){ if(statusEl) statusEl.textContent = '⚠️ El campo está vacío.'; return; }
+  try { localStorage.setItem(GEMINI_KEY_STORAGE, v); } catch(e){}
+  if(statusEl){ statusEl.style.color='var(--green)'; statusEl.textContent = '✅ Clave guardada — no tendrás que volver a escribirla en este navegador.'; }
+}
+
+function saveGeminiProxyUrl(){
+  const input = document.getElementById('gemini-proxy-url');
+  const statusEl = document.getElementById('gemini-proxy-status');
+  const v = input?.value.trim();
+  if(!v){ if(statusEl) statusEl.textContent = '⚠️ El campo está vacío.'; return; }
+  try { localStorage.setItem(GEMINI_PROXY_STORAGE, v); } catch(e){}
+  if(statusEl){ statusEl.style.color='var(--green)'; statusEl.textContent = '✅ URL guardada.'; }
 }
 
 function forgetGeminiApiKey(){
