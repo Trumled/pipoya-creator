@@ -1348,7 +1348,7 @@ async function generateWithNanoBanana(layerId, btn){
   btn.textContent = '🍌 Generando...';
   resultsEl.innerHTML = `<div style="font-size:9px;color:var(--blue)">🍌 Generando 4 variantes con Nano Banana (puede tardar un poco)...</div>`;
 
-  const model = 'gemini-2.5-flash-image';
+  const model = 'gemini-2.0-flash-preview-image-generation';
   // La petición va al PROXY (Cloudflare Worker), no a Google directamente —
   // Gemini no acepta llamadas desde el navegador por CORS. El proxy reenvía
   // a Google con la clave y devuelve la respuesta con cabeceras CORS.
@@ -1358,7 +1358,10 @@ async function generateWithNanoBanana(layerId, btn){
     const res = await fetch(url, {
       method: 'POST',
       headers: getClaudeHeaders(),
-      body: JSON.stringify({ contents: [{ parts: [{ text: promptText }] }] })
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: promptText }] }],
+        generationConfig: { responseModalities: ['TEXT', 'IMAGE'] }
+      })
     });
     if(!res.ok){
       const t = await res.text();
