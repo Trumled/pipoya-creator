@@ -1357,7 +1357,7 @@ async function generateWithNanoBanana(layerId, btn){
   const callOnce = async ()=>{
     const res = await fetch(url, {
       method: 'POST',
-      headers: getClaudeHeaders(),
+      headers: {'Content-Type': 'application/json'},
       body: JSON.stringify({
         contents: [{ parts: [{ text: promptText }] }],
         generationConfig: { responseModalities: ['TEXT', 'IMAGE'] }
