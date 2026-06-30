@@ -10,7 +10,7 @@ body{background:var(--bg);color:var(--text);font-family:system-ui,sans-serif;fon
 header{background:var(--bg2);border-bottom:1px solid var(--border);padding:8px 14px;display:flex;align-items:center;gap:10px;flex-shrink:0;flex-wrap:wrap}
 header h1{font-size:15px;font-weight:700;color:var(--gold)}
 .hdr-right{margin-left:auto;display:flex;gap:5px;flex-wrap:wrap}
-.layout{display:grid;grid-template-columns:210px 1fr 290px;flex:1;overflow:hidden;min-height:0}
+.layout{display:grid;grid-template-columns:210px 1fr 290px;flex:1;overflow:hidden;min-height:0;position:relative}
 .layers-panel{background:var(--bg2);border-right:1px solid var(--border);overflow-y:auto;min-height:0}
 .panel-title{font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);padding:8px 10px 6px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--bg2);z-index:1}
 .layer-item{display:flex;align-items:center;gap:6px;padding:4px 8px;cursor:pointer;transition:background .1s;border-left:2px solid transparent}
@@ -59,7 +59,7 @@ button.ai-btn:hover{background:var(--blue);color:#fff}
 select{background:var(--bg3);border:1px solid var(--border2);color:var(--text);padding:3px 5px;border-radius:4px;font-size:10px}
 
 /* ── AI PANEL ── */
-.ai-panel{background:var(--bg2);border:1px solid var(--blue);border-radius:10px;padding:14px;margin:12px;display:none}
+.ai-panel{background:var(--bg2);border:1px solid var(--blue);border-radius:10px;padding:14px;position:absolute;top:0;left:210px;right:290px;z-index:50;display:none;overflow-y:auto;max-height:100%;box-shadow:0 4px 32px rgba(0,0,0,.5)}
 .ai-panel.visible{display:block}
 .ai-panel h2{font-size:12px;color:var(--blue);margin-bottom:10px;display:flex;align-items:center;gap:6px}
 .ai-drop{border:2px dashed var(--border2);border-radius:8px;padding:20px;text-align:center;cursor:pointer;transition:all .2s;margin-bottom:10px;font-size:11px;color:var(--muted)}
@@ -1387,11 +1387,11 @@ async function generateWithNanoBanana(layerId, btn){
 
     resultsEl.innerHTML = `<div style="font-size:9px;color:var(--muted);margin-bottom:4px">${okImages.length} variante(s) generada(s)${failCount>0?` (${failCount} fallaron)`:''} — pulsa una para usarla en "${label}":</div>`;
     const grid = document.createElement('div');
-    grid.style.cssText = 'display:flex;gap:6px;flex-wrap:wrap';
+    grid.style.cssText = 'display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:4px';
     okImages.forEach((dataUrl, i)=>{
       const im = document.createElement('img');
       im.src = dataUrl;
-      im.style.cssText = 'width:84px;height:84px;object-fit:contain;background:#222;border:2px solid var(--border2);border-radius:4px;cursor:pointer;image-rendering:pixelated';
+      im.style.cssText = 'width:160px;height:160px;object-fit:contain;background:#222;border:2px solid var(--border2);border-radius:6px;cursor:pointer;image-rendering:pixelated';
       im.title = 'Variante '+(i+1)+' — clic para usarla';
       im.onmouseenter = ()=>{ im.style.borderColor = 'var(--gold)'; };
       im.onmouseleave = ()=>{ im.style.borderColor = 'var(--border2)'; };
