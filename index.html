@@ -1111,7 +1111,8 @@ function showMissingAssets(items){
   const list = document.getElementById('missing-assets-list');
   if(!items || items.length===0){
     box.style.display='none';
-    list.innerHTML='';\n    return;
+    list.innerHTML='';
+    return;
   }
   box.style.display='';
   list.innerHTML='';
