@@ -130,8 +130,8 @@ select{background:var(--bg3);border:1px solid var(--border2);color:var(--text);p
   <div class="ai-result-box" id="ai-result-box"></div>
 
   <div id="missing-assets-box" style="display:none;background:var(--bg3);border:1px solid var(--gold);border-radius:8px;padding:10px;margin-bottom:10px">
-    <div style="font-size:11px;font-weight:600;color:var(--gold);margin-bottom:8px">⚠️ Assets sin buena coincidencia en el catálogo</div>
-    <p style="font-size:9px;color:var(--muted);margin-bottom:8px">La IA usó la opción más parecida como aproximación. Genera el asset real con una IA de imágenes y súbelo abajo en "Subir asset nuevo", o genera 4 variantes automáticamente con Nano Banana (Gemini).</p>
+    <div style="font-size:11px;font-weight:600;color:var(--gold);margin-bottom:8px">🎨 Genera los assets de ropa con Nano Banana</div>
+    <p style="font-size:9px;color:var(--muted);margin-bottom:8px">Claude ha analizado cada zona del personaje por separado. Usa el botón 🍌 de cada pieza para generar 4 variantes con Nano Banana, o copia el prompt y úsalo en otra IA de imágenes.</p>
     <div style="margin-bottom:10px;padding:6px;background:var(--bg2);border-radius:6px">
       <label style="font-size:9px;color:var(--muted);display:block;margin-bottom:3px">🍌 Clave de API de Google AI Studio (para Nano Banana) — se guarda solo en este navegador, nunca en el archivo ni se envía a nadie salvo a Google al generar</label>
       <div style="display:flex;gap:6px;align-items:center">
@@ -811,32 +811,58 @@ ${visualDesc}
 OTRAS CAPAS (sin muestra visual, elige solo por descripción genérica):
 ${catalogDesc}
 
-Después, describe el COLOR REAL de cada zona como código hexadecimal exacto, mirando la imagen del personaje con atención:
-- color_piel: tono de piel exacto (ej "#f5cba7" para piel clara, "#8d5524" para piel morena oscura)
-- color_pelo: color de pelo exacto (ej "#f0e68c" para rubio, "#3b2415" para castaño oscuro, "#1a1a1a" para negro)
+Después, describe el COLOR REAL de cada zona como código hexadecimal exacto:
+- color_piel: tono de piel exacto
+- color_pelo: color de pelo exacto (rubio=#f0e68c, castaño=#3b2415, negro=#1a1a1a)
 - color_ojos: color de ojos si es visible
-- color_ropa: color principal de la ropa/armadura
-- color_ropa_secundario: color secundario de la ropa si lo hay
+- color_ropa: color principal de la ropa
+- color_ropa_secundario: color secundario si lo hay
 
-INSTRUCCIONES IMPORTANTES:
-- Para las capas CON hoja de muestras, es OBLIGATORIO comparar visualmente cada opción numerada con la imagen original antes de elegir — no adivines a ciegas
-- El color_pelo debe ser FIEL a lo que ves: rubio = amarillo/dorado claro, pelirrojo = naranja-rojizo, moreno = marrón oscuro, negro = casi negro
+ANÁLISIS DE ROPA POR ZONAS — OBLIGATORIO rellenar las 3 secciones mirando la imagen:
+Para cada zona del cuerpo, describe CON DETALLE TÉCNICO lo que ves en la imagen, como si se lo explicaras a un artista de pixel art que va a dibujar esa pieza AISLADA sobre fondo verde, sin ver el resto del personaje:
+
+"zona_torso": analiza SOLO la parte del cuerpo desde los hombros hasta la cintura. Describe: tipo de prenda (camisa, chaqueta, armadura, etc.), colores exactos con hex, texturas o patrones, detalles como botones/cremalleras/hombreras/cuellos, longitud de mangas, si lleva solapas, etc.
+
+"zona_piernas": analiza SOLO desde la cintura hasta los pies. Describe: tipo de prenda (pantalón, falda, leggings, faldón de armadura, etc.), colores, si tiene bolsillos/rodilleras/cinturón, si los pies llevan botas integradas o van separados, caída del tejido.
+
+"zona_manos": analiza SOLO las manos y muñecas. Describe: si lleva guantes (tipo, color, material, si son con dedos o sin, largura hasta el codo o solo la mano), si no lleva nada especial di "manos desnudas".
+
+INSTRUCCIONES GENERALES:
+- Para capas CON hoja de muestras, compara VISUALMENTE antes de elegir número
 - Para capas irrelevantes (barba en mujer, cola si no hay) pon grupo:0
-- Analiza género, tipo de ropa, accesorios, armas
-- IMPORTANTE: 01Top = parte SUPERIOR del cuerpo ÚNICAMENTE (torso, hombros, brazos hasta la muñeca). 01Bottom = parte INFERIOR ÚNICAMENTE (cintura hacia abajo, piernas, pies). 01Gloves = manos/guantes ÚNICAMENTE. Estos tres elementos son INDEPENDIENTES, elige el más parecido para CADA uno por separado.
-- Si para una capa CON hoja de muestras NINGUNA opción se parece razonablemente bien al original (forma, estilo o concepto muy distintos), elige igualmente la menos mala como aproximación temporal, PERO añádela también a la lista "sin_coincidencia" explicando qué se necesitaría generar
+- Aunque haya una coincidencia en el catálogo, SIEMPRE rellena las 3 zonas de ropa con descripción detallada
 
-IMPORTANTE: Responde UNICAMENTE con el JSON, sin texto antes ni despues, sin bloques de codigo markdown, sin explicaciones. Solo el JSON puro empezando por { y terminando por }.
+IMPORTANTE: Responde ÚNICAMENTE con el JSON puro, sin markdown, sin texto extra.
 
-Estructura exacta a devolver:
+Estructura exacta:
 {
-  "descripcion": "breve descripción del personaje detectado, incluyendo el color de pelo que viste",
+  "descripcion": "breve descripción del personaje",
   "colores": {
     "color_piel": "#f5cba7",
     "color_pelo": "#f0e68c",
     "color_ojos": "#4a90d9",
     "color_ropa": "#3050a0",
     "color_ropa_secundario": "#c0a040"
+  },
+  "ropa_analisis": {
+    "zona_torso": {
+      "descripcion": "camisa de lino blanca de manga larga con cuello en V, botones dorados en el centro, ligera textura de tela, sin mangas abombadas",
+      "colores_principales": ["#f5f5f0", "#c8a832"],
+      "tipo": "camisa",
+      "detalles": ["cuello en V", "botones dorados", "manga larga ajustada"]
+    },
+    "zona_piernas": {
+      "descripcion": "pantalón de cuero marrón oscuro ajustado, sin adornos, botas negras hasta la rodilla integradas visualmente",
+      "colores_principales": ["#4a2f1a", "#1a1a1a"],
+      "tipo": "pantalon",
+      "detalles": ["cuero liso", "botas integradas hasta rodilla"]
+    },
+    "zona_manos": {
+      "descripcion": "guantes de cuero marrón sin dedos que llegan hasta la muñeca, costura visible en el dorso",
+      "colores_principales": ["#5a3520"],
+      "tipo": "guantes_sin_dedos",
+      "detalles": ["sin dedos", "hasta muñeca", "costura en dorso"]
+    }
   },
   "capas": {
     "00Skin": {"grupo": 1, "variante": 0},
@@ -861,9 +887,7 @@ Estructura exacta a devolver:
     "08Makeup": {"grupo": 0, "variante": 0},
     "13Shadow": {"grupo": 1, "variante": 0}
   },
-  "sin_coincidencia": [
-    {"capa_id": "01Top", "capa_label": "Camisa/Chaqueta/Torso", "descripcion": "armadura de placas plateada, ninguna opción del catálogo tiene ese estilo"}
-  ]
+  "sin_coincidencia": []
 }`;
 
   try {
@@ -1038,10 +1062,41 @@ function applyAIResult(result){
 
   // Mostrar assets sin buena coincidencia, si los hay
   const sinCoincidencia = result.sin_coincidencia || [];
-  showMissingAssets(sinCoincidencia);
 
-  // Cerrar panel IA solo si no hay assets pendientes de generar
-  if(sinCoincidencia.length===0){
+  // SIEMPRE mostrar las 3 tarjetas de ropa con descripción técnica detallada
+  // usando el análisis por zonas que hizo Claude, aunque haya coincidencia en catálogo
+  const ropaAnalisis = result.ropa_analisis || {};
+  const ropaTarjetas = [];
+
+  if(ropaAnalisis.zona_torso) {
+    const z = ropaAnalisis.zona_torso;
+    const desc = z.descripcion + (z.detalles?.length ? ' — Detalles: ' + z.detalles.join(', ') : '') +
+      (z.colores_principales?.length ? ' — Colores: ' + z.colores_principales.join(', ') : '');
+    ropaTarjetas.push({capa_id:'01Top', capa_label:'Camisa/Chaqueta/Torso', descripcion: desc});
+  }
+  if(ropaAnalisis.zona_piernas) {
+    const z = ropaAnalisis.zona_piernas;
+    const desc = z.descripcion + (z.detalles?.length ? ' — Detalles: ' + z.detalles.join(', ') : '') +
+      (z.colores_principales?.length ? ' — Colores: ' + z.colores_principales.join(', ') : '');
+    ropaTarjetas.push({capa_id:'01Bottom', capa_label:'Pantalones/Falda/Perneras', descripcion: desc});
+  }
+  if(ropaAnalisis.zona_manos) {
+    const z = ropaAnalisis.zona_manos;
+    const desc = z.descripcion + (z.detalles?.length ? ' — Detalles: ' + z.detalles.join(', ') : '') +
+      (z.colores_principales?.length ? ' — Colores: ' + z.colores_principales.join(', ') : '');
+    ropaTarjetas.push({capa_id:'01Gloves', capa_label:'Guantes/Manoplas', descripcion: desc});
+  }
+
+  // Combinar: primero las 3 de ropa, luego el resto de sin_coincidencia (si hay)
+  const todasTarjetas = [
+    ...ropaTarjetas,
+    ...sinCoincidencia.filter(s => !['01Top','01Bottom','01Gloves'].includes(s.capa_id))
+  ];
+
+  showMissingAssets(todasTarjetas);
+
+  // Cerrar panel IA solo si no hay tarjetas de generación
+  if(todasTarjetas.length===0){
     setTimeout(()=>{
       document.getElementById('ai-panel').classList.remove('visible');
     }, 1500);
@@ -1056,27 +1111,37 @@ function showMissingAssets(items){
   const list = document.getElementById('missing-assets-list');
   if(!items || items.length===0){
     box.style.display='none';
-    list.innerHTML='';
-    return;
+    list.innerHTML='';\n    return;
   }
   box.style.display='';
   list.innerHTML='';
+
+  // Cambiar título del box según contenido
+  const boxTitle = box.querySelector('div[style*="gold"]');
+  if(boxTitle) boxTitle.textContent='🎨 Genera los assets de ropa con Nano Banana';
+
+  const clothingIds = new Set(['01Top','01Bottom','01Gloves']);
 
   items.forEach(item=>{
     const layerInfo = CATALOG.find(c=>c.id===item.capa_id);
     const label = item.capa_label || layerInfo?.label || item.capa_id;
     const genPrompt = buildGenerativePrompt(item.capa_id, label, item.descripcion);
+    const isClothing = clothingIds.has(item.capa_id);
 
     const cardId = 'missing-card-'+item.capa_id.replace(/[^a-zA-Z0-9]/g,'');
     const card = document.createElement('div');
-    card.style.cssText = 'background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:8px;margin-bottom:6px';
+    const borderColor = isClothing ? 'var(--blue)' : 'var(--gold)';
+    card.style.cssText = `background:var(--bg2);border:1px solid ${borderColor};border-radius:6px;padding:8px;margin-bottom:6px`;
     card.innerHTML = `
-      <div style="font-size:10px;font-weight:600;color:var(--gold);margin-bottom:4px">${label} <span style="color:var(--muted);font-weight:400">(${item.capa_id})</span></div>
-      <div style="font-size:9px;color:var(--muted);margin-bottom:6px">${item.descripcion||''}</div>
-      <textarea readonly style="width:100%;height:160px;background:var(--bg3);border:1px solid var(--border2);color:var(--text);font-size:9px;border-radius:4px;padding:4px;resize:vertical;font-family:monospace">${genPrompt}</textarea>
+      <div style="font-size:10px;font-weight:600;color:${isClothing ? 'var(--blue)' : 'var(--gold)'};margin-bottom:4px">${isClothing ? '🎨' : '⚠️'} ${label} <span style="color:var(--muted);font-weight:400">(${item.capa_id})</span></div>
+      <div style="font-size:9px;color:var(--text);margin-bottom:6px;line-height:1.5">${item.descripcion||''}</div>
+      <details style="margin-bottom:6px">
+        <summary style="font-size:9px;color:var(--muted);cursor:pointer">📋 Ver prompt técnico para Nano Banana</summary>
+        <textarea readonly style="width:100%;height:160px;background:var(--bg3);border:1px solid var(--border2);color:var(--text);font-size:9px;border-radius:4px;padding:4px;resize:vertical;font-family:monospace;margin-top:4px">${genPrompt}</textarea>
+      </details>
       <div style="display:flex;gap:4px;margin-top:4px;flex-wrap:wrap">
         <button class="sm" onclick="copyPromptToClipboard(this)" data-prompt="${encodeURIComponent(genPrompt)}">📋 Copiar prompt</button>
-        <button class="sm" onclick="prefillUploadTarget('${item.capa_id}')">📤 Subir aquí cuando lo tengas</button>
+        <button class="sm" onclick="prefillUploadTarget('${item.capa_id}')">📤 Subir asset aquí</button>
         <button class="sm ai-btn" onclick="generateWithNanoBanana('${item.capa_id}', this)" data-prompt="${encodeURIComponent(genPrompt)}" data-label="${encodeURIComponent(label)}">🍌 Generar 4 con Nano Banana</button>
       </div>
       <div id="${cardId}-results" style="margin-top:6px"></div>
