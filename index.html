@@ -1243,28 +1243,88 @@ function getLayerTypeInstructions(layerId, label){
 
 function buildGenerativePrompt(layerId, label, descripcion){
   const t = getLayerTypeInstructions(layerId, label);
+  const isTop = layerId === '01Top';
+  const isBottom = layerId === '01Bottom';
+  const isGloves = layerId === '01Gloves';
+
+  // Para las 3 capas de ropa, limpiar la descripción de menciones a otras partes
+  let cleanDesc = descripcion || label;
+  if(isTop){
+    // Eliminar menciones a guantes, piernas, botas de la descripción del torso
+    cleanDesc = cleanDesc.replace(/guanteletes?[^,.]*/gi,'').replace(/brazaleras?[^,.]*/gi,'').replace(/pantalones?[^,.]*/gi,'').replace(/botas?[^,.]*/gi,'').replace(/piernas?[^,.]*/gi,'').replace(/muslos?[^,.]*/gi,'').replace(/\s{2,}/g,' ').trim();
+  }
+  if(isBottom){
+    cleanDesc = cleanDesc.replace(/camisa[^,.]*/gi,'').replace(/chaqueta[^,.]*/gi,'').replace(/corpiño[^,.]*/gi,'').replace(/guanteletes?[^,.]*/gi,'').replace(/mangas?[^,.]*/gi,'').replace(/hombros?[^,.]*/gi,'').replace(/\s{2,}/g,' ').trim();
+  }
+  if(isGloves){
+    cleanDesc = cleanDesc.replace(/camisa[^,.]*/gi,'').replace(/pantalones?[^,.]*/gi,'').replace(/botas?[^,.]*/gi,'').replace(/armadura[^,.]*/gi,'').replace(/\s{2,}/g,' ').trim();
+  }
+
+  // Prompt radicalmente diferente para capas de ropa — enfocado en RECORTE, no en personaje
+  if(isTop || isBottom || isGloves){
+    const zone = isTop
+      ? 'the SHIRT / JACKET / CHEST ARMOR piece only — torso and arms, from shoulders to waist'
+      : isBottom
+      ? 'the PANTS / SKIRT / LEG ARMOR only — from waist to feet'
+      : 'the GLOVES / GAUNTLETS only — hands and wrists only';
+
+    const cropDesc = isTop
+      ? 'Imagine cutting out ONLY the shirt/jacket from a dressed character with scissors. The result is a floating torso garment with no head, no face, no legs, no feet, no hands visible — just the fabric/armor of the chest and arms. The arm sleeves end at the wrist with a clean cut edge.'
+      : isBottom
+      ? 'Imagine cutting out ONLY the pants/skirt from a dressed character with scissors. The result is a floating lower-body garment with no torso, no chest, no head — just the fabric from the hip line down to the foot. The top edge is a clean cut at the waist.'
+      : 'Imagine cutting out ONLY the gloves/gauntlets from a character with scissors. The result is a pair of tiny floating glove shapes covering only the hand and wrist area. No arm, no sleeve, no body — just the glove piece, very small (4–6 pixels wide in a 32px cell).';
+
+    const technicalLayer = isTop
+      ? 'The garment covers rows 8–24 of each 32px cell (shoulders at row 8, waist at row 24). Sleeve pixels extend left and right from the torso. The bottom edge is a straight horizontal cut at the waist. Row 1–7 = fully green (no hat/head area). Row 25–32 = fully green (no legs).'
+      : isBottom
+      ? 'The garment covers rows 22–31 of each 32px cell (waist at row 22, feet at row 31). The top edge is a straight horizontal cut at hip level. Row 1–21 = fully green (no torso/chest area). In walking frames, legs alternate left/right — left leg has garment pixels shifted left, right leg shifted right.'
+      : 'Glove pixels are TINY: roughly 3–5 pixels wide, 3–4 pixels tall, near the wrist position of each frame. In the DOWN frame gloves appear at lower sides of cell. In LEFT/RIGHT frames one glove appears on the correct side. Most of the 32×32 cell is green — the glove is a very small accent.';
+
+    return `Pixel art sprite sheet — ISOLATED CLOTHING LAYER for a layered RPG character system.
+
+WHAT TO GENERATE: ${zone}.
+
+CONCEPT: ${cropDesc}
+
+CLOTHING DESCRIPTION: ${cleanDesc}
+
+TECHNICAL PIXEL PLACEMENT:
+${technicalLayer}
+
+STRICT RULES — VIOLATIONS WILL MAKE THIS UNUSABLE:
+❌ DO NOT draw a face, head, or hair — 100% green in the head area
+❌ DO NOT draw hands or skin on the fingers — the glove/sleeve ends cleanly
+❌ DO NOT draw legs or feet if this is a top layer — 100% green below the waist
+❌ DO NOT draw a torso or chest if this is a bottom layer — 100% green above the waist
+❌ DO NOT draw any background, floor, shadow, or scenery
+❌ DO NOT draw a complete character — this is ONE isolated clothing piece only
+
+BACKGROUND: Solid flat chroma-key GREEN (#00FF00) — uniform, no gradient, no texture. Every pixel that is NOT part of the clothing item must be exactly #00FF00.
+
+SPRITE SHEET LAYOUT: 3 columns × 4 rows, each cell exactly 32×32 pixels (total: 96×128 px).
+Row 1 = facing DOWN | Row 2 = facing LEFT | Row 3 = facing RIGHT | Row 4 = facing UP.
+3 frames per row = slight walk animation (left step, neutral, right step).
+
+STYLE: Pixel art, hard edges, no anti-aliasing, 16-bit JRPG retro style (Pipoya pack aesthetic), 1px dark outline around the clothing silhouette, max 8 colors.
+
+OUTPUT: Single PNG 96×128px, #00FF00 background, isolated clothing layer only.`;
+  }
+
+  // Para el resto de capas (pelo, ojos, sombrero, etc.) — prompt original mejorado
   return `Generate a SINGLE ISOLATED EQUIPMENT LAYER sprite sheet for a 2D top-down RPG character system (Pipoya-style layered sprites). `+
     `This is NOT a full character — it is ${t.only}.\n\n`+
-    `Item description: ${descripcion||label}\n\n`+
+    `Item description: ${cleanDesc}\n\n`+
     `WHAT TO DRAW:\n`+
     `- ${t.notIncluded}\n`+
     `- ${t.technicalNotes}\n\n`+
-    `BACKGROUND REQUIREMENTS (CRITICAL):\n`+
-    `- Background must be a SOLID FLAT chroma-key GREEN (#00FF00, pure bright green), completely uniform with NO gradient, NO shadow, NO texture, NO pattern\n`+
-    `- Use ONLY this exact green for all non-item pixels — DO NOT use white, black, transparency, or any other color as background\n`+
-    `- Do NOT generate a transparent PNG — use the solid green chroma-key background; it will be removed afterward in post-processing\n`+
-    `- Do NOT add background scenery, props, shadows cast on the ground, or vignette\n\n`+
+    `BACKGROUND (CRITICAL): Solid flat chroma-key GREEN (#00FF00). Every non-item pixel must be exactly #00FF00. No transparency, no white, no gradient.\n\n`+
     `SPRITE SHEET LAYOUT:\n`+
     `- Grid: 3 columns × 4 rows, each cell EXACTLY 32×32 pixels (total image 96×128 px)\n`+
-    `- Row 1 = character facing DOWN (toward viewer), Row 2 = facing LEFT, Row 3 = facing RIGHT, Row 4 = facing UP (away)\n`+
-    `- The 3 columns in each row are walking animation frames: Frame 1 (left step), Frame 2 (idle/neutral), Frame 3 (right step)\n`+
-    `- The item itself stays mostly static between frames — only subtle movement/sway to follow the body animation\n\n`+
-    `STYLE REQUIREMENTS:\n`+
-    `- Pixel art, NO anti-aliasing, hard pixel edges, retro 16-bit JRPG aesthetic matching Pipoya RPG asset packs\n`+
-    `- At most 8–12 colors for the item (not counting the green background)\n`+
-    `- Clear dark outlines (1px) around the item silhouette\n`+
-    `- ${t.placement}\n\n`+
-    `OUTPUT: A single PNG file, 96×128 px, solid bright green (#00FF00) chroma-key background, containing only this isolated item layer in the 3×4 grid described above.`;
+    `- Row 1 = facing DOWN, Row 2 = facing LEFT, Row 3 = facing RIGHT, Row 4 = facing UP\n`+
+    `- 3 walking animation frames per row\n\n`+
+    `STYLE: Pixel art, NO anti-aliasing, hard edges, retro 16-bit JRPG, 1px dark outline, max 8–12 colors.\n`+
+    `${t.placement}\n\n`+
+    `OUTPUT: Single PNG 96×128px, #00FF00 background, isolated layer only.`;
 }
 
 function copyPromptToClipboard(btn){
