@@ -1117,6 +1117,10 @@ function showMissingAssets(items){
   box.style.display='';
   list.innerHTML='';
 
+  // Filtrar items inválidos (sin capa_id) para evitar errores
+  items = items.filter(it => it && it.capa_id);
+  if(items.length===0){ box.style.display='none'; return; }
+
   // Cambiar título del box según contenido
   const boxTitle = box.querySelector('div[style*="gold"]');
   if(boxTitle) boxTitle.textContent='🎨 Genera los assets de ropa con Nano Banana';
@@ -1154,6 +1158,8 @@ function showMissingAssets(items){
 // Genera instrucciones específicas según el TIPO de capa, para dejar claro
 // a la IA generativa que solo queremos esa pieza aislada, no un personaje completo.
 function getLayerTypeInstructions(layerId, label){
+  layerId = layerId || '';
+  label = label || 'item';
   const isHair = layerId.startsWith('03Hair') || layerId==='09Beard';
   const isTop = layerId==='01Top';
   const isBottom = layerId==='01Bottom';
